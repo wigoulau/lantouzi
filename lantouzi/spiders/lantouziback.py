@@ -6,7 +6,7 @@ from lantouzi.items import LantouziItem
 class LantouzibackSpider(scrapy.Spider):
     name = 'lantouziback'
     allowed_domains = ['lantouzi.com']
-    start_urls = ['https://lantouzi.com/post?page=1']
+    start_urls = ['https://lantouzi.com/post?page=26']
 
     def parse(self, response):
         print(response.url)
@@ -18,7 +18,7 @@ class LantouzibackSpider(scrapy.Spider):
             title = item_node.css('a::text').extract_first()
             link = item_node.css('a::attr(href)').extract_first()
             #print(link)
-            if (title.find('项目回款公告') >= 0):
+            if (title.find('项目回款') >= 0):
                 yield scrapy.Request(url=link, callback=self.parseContent)
 
         if item_nodes:
@@ -32,26 +32,38 @@ class LantouzibackSpider(scrapy.Spider):
         return num
 
     def parseContent(self, response):
-        #print(response.url)
+        print(response.url)
+        content = ""
+        result = []
         item_nodes = response.css('.MsoNormal')
+
         for item_node in item_nodes:
-            content = item_node.css('::text').extract_first()
-            #print(content)
-            pattern = re.compile('至(.*?)年(.*?)月(.*?)日.*退出(.*?)笔.*共(.*?)元')
-            if (content.find("总计完成标的还款") >= 0):
-                item = LantouziItem()
-                result = pattern.findall(content)
-                #print(result)
-                year = result[0][0]
-                month = result[0][1]
-                day = result[0][2]
-                count = self.NumberStr(result[0][3])
-                money = self.NumberStr(result[0][4])
-                item['year'] = year
-                item['month'] = month
-                item['day'] = day
-                item['count'] = count
-                item['money'] = money
-                #print('add item')
-                yield item
+            print(item_node.css('::text'))
+            content = content + item_node.css('::text').extract_first()
+        print(content)
+        pattern1 = re.compile('至(.*)年(.*)月(.*)日.*退出(\d+)笔，共(.*?)元', flags=re.S)
+        result1 = pattern1.findall(content)
+
+        pattern2 = re.compile('至(.*)年(.*)月(.*)日.*还款(\d+)笔，共(.*?)元', flags=re.S)
+        result2 = pattern2.findall(content)
+
+        if (len(result1) > 0):
+            result = result1
+        if (len(result2) > 0):
+            result = result2
+        print(result)
+        if (len(result) > 0):
+            item = LantouziItem()
+            year = result[0][0]
+            month = result[0][1]
+            day = result[0][2]
+            count = self.NumberStr(result[0][3])
+            money = self.NumberStr(result[0][4])
+            item['year'] = year
+            item['month'] = month
+            item['day'] = day
+            item['count'] = count
+            item['money'] = money
+            #print('add item')
+            yield item
         #print('#####')

@@ -13,7 +13,7 @@ class LantouziPipeline(object):
     def process_item(self, item, spider):
         temp = item['year'] + ',' + item['month'] + ',' + item['day'] + ',' + item['count'] + ',' + item['money']
         #print("pipeline")
-        #print(temp)
+        print(temp)
         d = temp.split(',')
         #print(d)
         data.append(d)
@@ -37,8 +37,8 @@ class LantouziPipeline(object):
         plt.plot(x, y1, 'r', x, y2, 'b')
         plt.legend(['count', 'money'])
         plt.pause(0.01)
-        #print(data)
+        #print(temp)
         with open('lantouzi.csv', 'a') as fp:
-            fp.write(data)
+            fp.write(temp)
             fp.write('\n')
         return item
